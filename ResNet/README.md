@@ -70,6 +70,7 @@ Batch normalization then ReLu then convolution as described by:
     by Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun, Jul 2016.
 
 2.bottleneck
+
 described in:
         Convolution then batch normalization then ReLU as described by:
         Deep Residual Learning for Image Recognition
@@ -81,3 +82,6 @@ described in:
         Identity Mappings in Deep Residual Networks
         https://arxiv.org/pdf/1603.05027.pdf
         by Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun, Jul 2016.
+
+## Resnet_run.py
+see more in future

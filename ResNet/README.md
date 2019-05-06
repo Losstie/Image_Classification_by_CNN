@@ -43,6 +43,7 @@ Right: a “bottleneck” building block for ResNet-50/101/152.
 
 <img src="https://github.com/Losstie/Image_Classification_by_CNN/blob/master/ResNet/block_layer.png" alt="block_layer" />
 
+#### Version_1
 1.regular 
 
 Convolution then batch normalization then ReLU as described by:
@@ -59,4 +60,24 @@ Similar to regular, except using the "bottleneck" blocks
       https://arxiv.org/pdf/1512.03385.pdf
       by Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun, Dec 2015.
 
+#### Version_2
 
+1.regular
+
+Batch normalization then ReLu then convolution as described by:
+    Identity Mappings in Deep Residual Networks
+    https://arxiv.org/pdf/1603.05027.pdf
+    by Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun, Jul 2016.
+
+2.bottleneck
+described in:
+        Convolution then batch normalization then ReLU as described by:
+        Deep Residual Learning for Image Recognition
+        https://arxiv.org/pdf/1512.03385.pdf
+        by Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun, Dec 2015.
+        
+ Adapted to the ordering conventions of:
+        Batch normalization then ReLu then convolution as described by:
+        Identity Mappings in Deep Residual Networks
+        https://arxiv.org/pdf/1603.05027.pdf
+        by Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun, Jul 2016.

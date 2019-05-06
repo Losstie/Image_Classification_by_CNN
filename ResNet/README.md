@@ -6,7 +6,7 @@ by TensorFlow. And I will explain code details and the paper.
 In this module, I will explain the paper with code details.
 
 ### Params
-- resnet_size: A single integer for the size of the ResNet model.
+- resnet_size: A single integer for the size of the ResNet model.It should be 6n+2.
 - bottleneck: Use regular blocks or bottleneck blocks.
 - num_classes:The number of classes used as labels.
 - num_filters:The number of filters to use for the first block layer

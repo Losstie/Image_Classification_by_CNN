@@ -34,14 +34,18 @@ In this module, I will explain the paper with code details.
 ### Structure
 The block layer's has two kinds of structures, which is regular and bottleneck structure.The regular block layer has one conv_layer,and bottleneck has three.
 
-<img src="/Losstie/Image_Classification_by_CNN/blob/master/ResNet/building_block.png?raw=true" alt="building_block">
+As shown below,this is a building block of Residual learning.
+<img src="https://github.com/Losstie/Image_Classification_by_CNN/blob/master/ResNet/block_layer.png" alt="building_block" />
+
+
 1.regular 
 
 Convolution then batch normalization then ReLU as described by:
         Deep Residual Learning for Image Recognition
         https://arxiv.org/pdf/1512.03385.pdf
         by Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun, Dec 2015.
-<img src="https://github.com/Losstie/Image_Classification_by_CNN/blob/master/ResNet/block_layer.png" alt="block_layer"/>
+<img src="https://github.com/Losstie/Image_Classification_by_CNN/blob/master/ResNet/block_layer.png" alt="block_layer" />
+
 2.bottleneck
 
 Similar to regular, except using the "bottleneck" blocks

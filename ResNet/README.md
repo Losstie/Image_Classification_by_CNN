@@ -34,7 +34,8 @@ In this module, I will explain the paper with code details.
 ### Structure
 The block layer's has two kinds of structures, which is regular and bottleneck structure.The regular block layer has one conv_layer,and bottleneck has three.
 
-As shown below,this is a building block of Residual learning.
+** As shown below,this is a building block of Residual learning.
+
 <img src="https://github.com/Losstie/Image_Classification_by_CNN/blob/master/ResNet/building_block.png" alt="building_block" />
 
 

@@ -36,12 +36,12 @@ The block layer's has two kinds of structures, which is regular and bottleneck s
 
 ** As shown below,this is a building block of Residual learning.
 
-<img src="https://github.com/Losstie/Image_Classification_by_CNN/blob/master/ResNet/building_block.png" alt="building_block" />
+<img src="https://github.com/Losstie/Image_Classification_by_CNN/blob/master/ResNet/images/building_block.png" alt="building_block" />
 
 A deeper residual function F for ImageNet. Left: a building block (on 56×56 feature maps) as in Fig. for ResNet-34.
 Right: a “bottleneck” building block for ResNet-50/101/152. 
 
-<img src="https://github.com/Losstie/Image_Classification_by_CNN/blob/master/ResNet/block_layer.png" alt="block_layer" />
+<img src="https://github.com/Losstie/Image_Classification_by_CNN/blob/master/ResNet/images/block_layer.png" alt="block_layer" />
 
 #### Version_1
 1.regular 

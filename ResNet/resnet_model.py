@@ -297,7 +297,7 @@ def block_layer(inputs, filters, bottleneck, block_fn, blocks, strides,
 
     # Only the first block per block_layer uses projection_shortcut and strides
     inputs = block_fn(inputs, filters, training, projection_shortcut, strides,
-                    data_format)
+                      data_format)
 
     for _ in range(1, blocks):
         inputs = block_fn(inputs, filters, training, None, 1, data_format)
@@ -434,7 +434,7 @@ class Model(object):
               A logits Tensor with shape[<batch_size>, self.num_classes].
         """
         with self._model_variable_scope():
-            if self.data_format == 'channels_first':
+            if self.data_format == 'channels_last':
                 # Convert the inputs from channels_last (NHWC) to channels_first (NCHW).
                 # This provides a large performance boost on GPU. See
                 # https://www.tensorflow.org/performance/performance_guide#data_formats

@@ -83,5 +83,5 @@ described in:
         https://arxiv.org/pdf/1603.05027.pdf
         by Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun, Jul 2016.
 
-## Resnet_run.py
-see more in future
+### cifar10_resnet.py
+see code details for cifar10_resnet.py

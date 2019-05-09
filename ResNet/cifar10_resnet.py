@@ -228,7 +228,6 @@ def learning_rate_with_decay(batch_size, batch_denom, num_images, boundary_epoch
         wrate = (plr * tf.cast(global_step, tf.float32) / tf.cast(
             w_steps, tf.float32))
 
-        # TODO(pkanwar): use a flag to help calc num_epochs.
         num_epochs = 90
         train_steps = batches_per_epoch * num_epochs
 

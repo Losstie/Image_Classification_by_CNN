@@ -505,7 +505,6 @@ def resnet_main(flags_obj, model_function, input_function, dataset_name, shape=N
     )
     train_epochs = (0 if flags_obj.mode != 'train' else flags_obj.train_epochs)
     max_steps = flags_obj.train_counts // flags_obj.batch_size
-    classifier.train(input_fn=lambda :input_fn_train(train_epochs), steps=max_steps, hooks=[logging_hook])
 
     def input_fn_eval():
         return input_function(is_training=False,
@@ -513,9 +512,11 @@ def resnet_main(flags_obj, model_function, input_function, dataset_name, shape=N
                               batch_size=flags_obj.batch_size,
                               num_epochs=1,
                               dtype=tf.float32)
-
-    eval_result = classifier.evaluate(input_fn=lambda :input_fn_eval())
-    print(eval_result)
+    if flags_obj.mode == 'train':
+        classifier.train(input_fn=lambda: input_fn_train(train_epochs), steps=max_steps, hooks=[logging_hook])
+    else:
+        eval_result = classifier.evaluate(input_fn=lambda :input_fn_eval())
+        print(eval_result)
 
 
 def main(unused_argv):
@@ -530,7 +531,7 @@ def define_flags(resnet_size_choices=None):
     flags.DEFINE_string(name="model_dir",
                         short_name='md', default="/models",
                         help="the location of the model checkpoint files.")
-    flags.DEFINE_enum(name="mode", default="train", enum_values=["train", 'evaluate', "test"],
+    flags.DEFINE_enum(name="mode", default="train", enum_values=["train", 'evaluate'],
                       help="the mode of function,must be train or test")
     flags.DEFINE_enum(name="data_format", default='channels_last', enum_values=["channels_first", "channels_last"],
                       help="the data_format,NCWH OR NWHC")
@@ -597,7 +598,7 @@ def define_flags(resnet_size_choices=None):
     print(data_dir)
     set_default(data_dir='../dataset/cifar-10',
                 model_dir=models_path,
-                mode="train",
+                mode="evaluate",
                 resnet_size='56',
                 train_epochs=10,
                 batch_size=16)

@@ -311,7 +311,7 @@ class Model(object):
                  conv_stride, first_pool_size, first_pool_stride,
                  block_size, block_stride,
                  resnet_version=DEFAULT_VERSION, data_format=None,
-                 dtype=DEFAULT_DTYPE):
+                 dtype=DEFAULT_DTYPE, change_dataformat_NCHW=False):
         """Create a model for classifying an image
         Args:
           resnet_size: A single integer for the size of the ResNet model.
@@ -341,7 +341,6 @@ class Model(object):
           ValueError: if invalid version is selected.
         """
         self.resnet_size = resnet_size
-
         if not data_format:
             data_format = (
                 'channels_first' if tf.test.is_built_with_cuda() else 'channels_last')
@@ -376,6 +375,7 @@ class Model(object):
         self.block_strides = block_stride
         self.dtype = dtype
         self.pre_activation = resnet_version == 2
+        self.change_dataformat_NCHW = change_dataformat_NCHW
 
     def _custom_dtype_getter(self, getter, name, shape=None, dtype=DEFAULT_DTYPE,
                              *args, **kwargs):
@@ -434,12 +434,14 @@ class Model(object):
               A logits Tensor with shape[<batch_size>, self.num_classes].
         """
         with self._model_variable_scope():
-            if self.data_format == 'channels_last':
+            print(self.data_format)
+
+            if self.data_format == 'channels_last' and self.change_dataformat_NCHW:
                 # Convert the inputs from channels_last (NHWC) to channels_first (NCHW).
                 # This provides a large performance boost on GPU. See
                 # https://www.tensorflow.org/performance/performance_guide#data_formats
                 inputs = tf.transpose(a=inputs, perm=[0, 3, 1, 2])
-
+                self.data_format = 'channels_first'
             inputs = conv2d_fixed_padding(
                 inputs=inputs, filters=self.num_filters, kernel_size=self.kernel_size,
                 strides=self.conv_stride, data_format=self.data_format)
@@ -467,6 +469,7 @@ class Model(object):
                     block_fn=self.block_fn, blocks=num_blocks,
                     strides=self.block_strides[i], training=training,
                     name='block_layer{}'.format(i + 1), data_format=self.data_format)
+                print(inputs.shape,i)
 
             # Only apply the BN and ReLU for model that does pre_activation in each
             # building/bottleneck block, eg resnet V2.

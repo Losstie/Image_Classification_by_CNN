@@ -2,12 +2,11 @@
 # -*- coding:utf-8 -*-
 """
 @project: Image_Classification_by_CNN
-@file:cifar10_resnet.py
+@file:cifar10_main.py
 @author: losstie
-@create_time: 2019/5/8 14:23
+@create_time: 2019/5/11 19:15
 @description:
 """
-
 from __future__ import absolute_import
 from __future__ import  division
 from __future__ import print_function
@@ -17,9 +16,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
 from absl import app as absl_app
 from absl import flags
 import tensorflow as tf
-
-
-import resnet_model
+import densenet_model
 
 HEIGHT = 32
 WIDTH = 32
@@ -28,7 +25,6 @@ _DEFAULT_IMAGE_BYTES = HEIGHT * WIDTH * NUM_CHANNELS
 
 _RECORD_BYTES = _DEFAULT_IMAGE_BYTES + 1
 NUM_CLASSES = 10
-_NUM_DATA_FILES = 5
 
 NUM_IMAGES = {
     'train': 50000,
@@ -36,7 +32,6 @@ NUM_IMAGES = {
 }
 
 DATASET_NAME = 'CIFAR-10'
-
 
 #################################################
 # Data processing
@@ -72,7 +67,6 @@ def parse_record(raw_record, is_training, dtype):
     # from [depth * height * width] to [depth, height, width].
 
     image = tf.reshape(image, [NUM_CHANNELS, HEIGHT, WIDTH])
-    print(image.shape)
     # Convert from [depth, height, width] to [height, width, depth], and cast as
     # float32.
 
@@ -250,49 +244,37 @@ def learning_rate_with_decay(batch_size, batch_denom, num_images, boundary_epoch
 ###############################################################################
 # Running the model
 ###############################################################################
-class Cifar10Model(resnet_model.Model):
-    """Model class with appropriate defaults for CIFAR-10 data. """
-
-    def __init__(self, resnet_size, data_format=None, num_classes=NUM_CLASSES,
-                 resnet_version=resnet_model.DEFAULT_VERSION,
-                 dtype=resnet_model.DEFAULT_DTYPE):
+class Cifar10Model(densenet_model.Model):
+    def __init__(self, densenet_size, reduction, drop_rate, growth_rate, data_name=None,
+                 data_format=None, num_classes=NUM_CLASSES,
+                 densenet_version=densenet_model.DEFAULT_VERSION,
+                 dtype=densenet_model.DEFAULT_DTYPE):
         """These are the parameters that work for `CIFAR-10` data
         Args:
-            resnet_size: The number of convolution layers needed in the model.
-            data_format: Either `channels_first` or `channels_last`, specifying which
-                data format to use when setting up the model.
-            num_classes: The number of output classes needed from the model. This enables
-                users to extend the same model to their own datasets.
-            resnet_version:Integer representing which version of the ResNet network to use.
-                See ReadME for details. vaild values:[1, 2]
-            dtype: The tensorflow dtype to use for calculations.
-        Raise:
-            ValueError: if invalid resnet_size is chosen
+            densenet_size: the number of convolution layers needed in the model.
+            data_format:
+            num_classes:
+            densenet_version:
+            dtype:
         """
-        if resnet_size % 6 != 2:
-            raise ValueError('resnet_size must be 6n+2:', resnet_size)
-
-        num_blocks = (resnet_size - 2) // 6
+        if (densenet_size-4) % 3 != 0:
+            raise ValueError('densenet_size must be 3n+4:', densenet_size)
 
         super(Cifar10Model, self).__init__(
-            resnet_size=resnet_size,
-            bottleneck=False,
+            densenet_size=densenet_size,
             num_classes=num_classes,
-            num_filters=16,
-            kernel_size=3,
-            conv_stride=1,
-            first_pool_size=None,
-            first_pool_stride=None,
-            block_size=[num_blocks] * 3,
-            block_stride=[1, 2, 2],
-            resnet_version=resnet_version,
+            densenet_version=densenet_version,
+            reduction=reduction,
+            drop_rate=drop_rate,
+            growth_rate=growth_rate,
+            data_name=data_name,
             data_format=data_format,
             dtype=dtype
         )
 
 
 def cifar10_model_fn(features, labels, mode, params):
-    """Model function for resnet"""
+    """Model function for DenseNet"""
     features = tf.reshape(features, [-1, HEIGHT, WIDTH, NUM_CHANNELS])
     # Learning rate schedule follows arXiv:1512.03385 for ResNet-56 and under.
     learning_rate_fn = learning_rate_with_decay(
@@ -312,17 +294,21 @@ def cifar10_model_fn(features, labels, mode, params):
     def loss_filter_fn(_):
         return True
 
-    return resnet_model_fn(
+    return densenet_model_fn(
         features=features,
         labels=labels,
         mode=mode,
         model_class=Cifar10Model,
-        resnet_size=params['resnet_size'],
+        densenet_size=params['densenet_size'],
+        reduction=params['reduction'],
+        drop_rate=params['drop_rate'],
+        growth_rate=params['growth_rate'],
         weight_decay=weight_decay,
         learning_rate_fn=learning_rate_fn,
         momentum=0.9,
         data_format=params['data_format'],
-        resnet_version=params['resnet_version'],
+        data_name=params['data_name'],
+        densenet_version=params['densenet_version'],
         loss_scale=params['loss_scale'],
         loss_filter_fn=loss_filter_fn,
         dtype=params['dtype'],
@@ -330,12 +316,13 @@ def cifar10_model_fn(features, labels, mode, params):
     )
 
 
-def resnet_model_fn(features, labels, mode, model_class, resnet_size,
-                    weight_decay, learning_rate_fn, momentum,
-                    data_format,resnet_version, loss_scale,
-                    loss_filter_fn=None, dtype=resnet_model.DEFAULT_DTYPE,
-                    fine_tune=False, label_smoothing=0.0):
-    model = model_class(resnet_size, data_format, resnet_version=resnet_version, dtype=dtype)
+def densenet_model_fn(features, labels, mode, model_class, densenet_size, reduction,
+                      drop_rate, growth_rate, weight_decay, learning_rate_fn, momentum,
+                      data_format, data_name,densenet_version, loss_scale,
+                      loss_filter_fn=None, dtype=densenet_model.DEFAULT_DTYPE,
+                      fine_tune=False, label_smoothing=0.0):
+    model = model_class(densenet_size, reduction, drop_rate, growth_rate, data_name,
+                        data_format, densenet_version=densenet_version, dtype=dtype)
 
     logits = model(features, mode == tf.estimator.ModeKeys.TRAIN)
     logits = tf.cast(logits, tf.float32)
@@ -479,14 +466,17 @@ def resnet_main(flags_obj, model_function, input_function, dataset_name, shape=N
     else:
         warm_start_settings = None
 
-
     classifier = tf.estimator.Estimator(
         model_fn=model_function, model_dir=flags_obj.model_dir, config=run_config,
         warm_start_from=warm_start_settings, params={
-            'resnet_size': int(flags_obj.resnet_size),
+            'densenet_size': int(flags_obj.densenet_size),
+            'reduction': flags_obj.reduction,
+            'drop_rate': flags_obj.drop_rate,
+            'growth_rate': flags_obj.growth_rate,
+            'data_name':dataset_name,
             'data_format': flags_obj.data_format,
             'batch_size': flags_obj.batch_size,
-            'resnet_version': int(flags_obj.resnet_version),
+            'densenet_version': flags_obj.densenet_version,
             'loss_scale': 1,
             'dtype': tf.float32,
             'fine_tune': flags_obj.fine_tune,
@@ -534,7 +524,7 @@ def define_flags(resnet_size_choices=None):
     flags.DEFINE_enum(name="mode", default="train", enum_values=["train", 'evaluate'],
                       help="the mode of function,must be train or test")
     flags.DEFINE_enum(name="data_format", default='channels_last', enum_values=["channels_first", "channels_last"],
-                      help="the data_format,NCWH OR NWHC")
+                      help="the data_format,NCHW OR NHWC")
 
     flags.DEFINE_bool(name="clean",
                       default=False,
@@ -558,9 +548,12 @@ def define_flags(resnet_size_choices=None):
     flags.DEFINE_integer(name="train_counts",short_name='tc', default=50000,
                          help="train_counts for training")
 
-    flags.DEFINE_enum(name="resnet_version", short_name="rv",
-                      default="1", enum_values=["1", "2"],
-                      help="Version of Resnet,1 or 2")
+    flags.DEFINE_enum(name="densenet_version", short_name="rv",
+                      default="BC", enum_values=["BC", "Basic"],
+                      help="Version of DenseNet,BC or Basic")
+    flags.DEFINE_float(name="reduction", default=0.5, help="the compression rate of transition_layer")
+    flags.DEFINE_float(name="drop_rate", default=0.2, help="the drop_rate of drop_out")
+    flags.DEFINE_integer(name="growth_rate", default=12, help="the channels after composition function")
     flags.DEFINE_bool(name="fine_tune", short_name="ft",
                       default=False, help="if not None initialize all"
                                           "the network except the final layer with these values.")
@@ -580,7 +573,7 @@ def define_flags(resnet_size_choices=None):
         name='weight_decay', default=1e-4,
         help='Weight decay coefficiant for l2 regularization.')
     choice_kwargs = dict(
-        name='resnet_size', short_name='rs', default='50',
+        name='densenet_size', short_name='rs', default='50',
         help='The size of the ResNet model to use.')
 
     if resnet_size_choices is None:
@@ -595,11 +588,10 @@ def define_flags(resnet_size_choices=None):
     dir_path = os.path.dirname(os.path.realpath(__file__))
     models_path = os.path.join(dir_path, 'models')
     data_dir = os.path.join(dir_path, 'dataset\cifar-10')
-    print(data_dir)
     set_default(data_dir='../dataset/cifar-10',
                 model_dir=models_path,
                 mode="train",
-                resnet_size='56',
+                densenet_size='40',
                 train_epochs=10,
                 batch_size=16)
 
@@ -609,5 +601,3 @@ if __name__ == "__main__":
     define_flags()
     tf.app.run()
 
-model = model_class(densenet_size, reduction, drop_rate, growth_rate, data_name,
-                        data_format, densenet_version=densenet_version, dtype=dtype)

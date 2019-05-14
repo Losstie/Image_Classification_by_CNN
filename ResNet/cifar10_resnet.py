@@ -461,6 +461,10 @@ def resnet_model_fn(features, labels, mode, model_class, resnet_size,
 
 def resnet_main(flags_obj, model_function, input_function, dataset_name, shape=None):
     """"""
+    if flags_obj.clean and tf.io.gfile.exists(flags_obj.model_dir):
+        tf.logging.info("--clean flag set.Removing existing model dir:"
+                        "{}".format(flags_obj.model_dir))
+        tf.io.gfile.rmtree(flags_obj.model_dir)
     # Creates session config. allow_soft_placement = True, is required for
     # multi-GPU and is not harmful for other modes.
     session_config = tf.compat.v1.ConfigProto(
@@ -499,12 +503,14 @@ def resnet_main(flags_obj, model_function, input_function, dataset_name, shape=N
                               batch_size=flags_obj.batch_size,
                               num_epochs=num_epochs,
                               dtype=tf.float32)
-    tensor_to_log = {"probability": "softmax_tensor"}
+
+    tensor_to_log = {"train_accuracy": "train_accuracy",
+                     "train_accuracy_top_5": "train_accuracy_top_5"}
     logging_hook = tf.train.LoggingTensorHook(
         tensors=tensor_to_log, every_n_iter=50
     )
     train_epochs = (0 if flags_obj.mode != 'train' else flags_obj.train_epochs)
-    max_steps = flags_obj.train_counts // flags_obj.batch_size
+    max_steps = (flags_obj.train_counts // flags_obj.batch_size)*flags_obj.train_epochs
 
     def input_fn_eval():
         return input_function(is_training=False,
@@ -515,7 +521,7 @@ def resnet_main(flags_obj, model_function, input_function, dataset_name, shape=N
     if flags_obj.mode == 'train':
         classifier.train(input_fn=lambda: input_fn_train(train_epochs), steps=max_steps, hooks=[logging_hook])
     else:
-        eval_result = classifier.evaluate(input_fn=lambda :input_fn_eval())
+        eval_result = classifier.evaluate(input_fn=lambda :input_fn_eval(), steps=max_steps)
         print(eval_result)
 
 

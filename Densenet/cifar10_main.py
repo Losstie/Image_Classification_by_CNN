@@ -448,6 +448,11 @@ def densenet_model_fn(features, labels, mode, model_class, densenet_size, reduct
 
 def resnet_main(flags_obj, model_function, input_function, dataset_name, shape=None):
     """"""
+    if flags_obj.clean and tf.io.gfile.exists(flags_obj.model_dir):
+        tf.logging.info("--clean flag set.Removing existing model dir:"
+                        "{}".format(flags_obj.model_dir))
+        tf.io.gfile.rmtree(flags_obj.model_dir)
+
     # Creates session config. allow_soft_placement = True, is required for
     # multi-GPU and is not harmful for other modes.
     session_config = tf.compat.v1.ConfigProto(
@@ -489,12 +494,14 @@ def resnet_main(flags_obj, model_function, input_function, dataset_name, shape=N
                               batch_size=flags_obj.batch_size,
                               num_epochs=num_epochs,
                               dtype=tf.float32)
-    tensor_to_log = {"probability": "softmax_tensor"}
+    tensor_to_log = {"train_accuracy": "train_accuracy",
+                     "train_accuracy_top_5": "train_accuracy_top_5"}
     logging_hook = tf.train.LoggingTensorHook(
-        tensors=tensor_to_log, every_n_iter=50
+        tensors=tensor_to_log,
+        every_n_iter=50
     )
     train_epochs = (0 if flags_obj.mode != 'train' else flags_obj.train_epochs)
-    max_steps = flags_obj.train_counts // flags_obj.batch_size
+    max_steps = (flags_obj.train_counts // flags_obj.batch_size) * flags_obj.train_epochs
 
     def input_fn_eval():
         return input_function(is_training=False,
@@ -502,10 +509,14 @@ def resnet_main(flags_obj, model_function, input_function, dataset_name, shape=N
                               batch_size=flags_obj.batch_size,
                               num_epochs=1,
                               dtype=tf.float32)
+
+    # parameter_count = tf.reduce_sum([tf.reduce_prod(tf.shape(v)) for v in tf.trainable_variables()])
+
     if flags_obj.mode == 'train':
-        classifier.train(input_fn=lambda: input_fn_train(train_epochs), steps=max_steps, hooks=[logging_hook])
+        classifier.train(input_fn=lambda: input_fn_train(train_epochs), max_steps=max_steps, hooks=[logging_hook])
+
     else:
-        eval_result = classifier.evaluate(input_fn=lambda :input_fn_eval())
+        eval_result = classifier.evaluate(input_fn=lambda :input_fn_eval(), steps=max_steps)
         print(eval_result)
 
 
@@ -587,12 +598,20 @@ def define_flags(resnet_size_choices=None):
 
     dir_path = os.path.dirname(os.path.realpath(__file__))
     models_path = os.path.join(dir_path, 'models')
-    data_dir = os.path.join(dir_path, 'dataset\cifar-10')
     set_default(data_dir='../dataset/cifar-10',
                 model_dir=models_path,
-                mode="evaluate",
+                pretrained_model_checkpoint_path=None,
+                clean=False,
+                mode="train",
+                stop_threshold=None,
+                enable_lars=False,
+                densenet_version='BC',
                 densenet_size='40',
+                reduction=0.5,
+                drop_rate=0.2,
+                growth_rate=12,
                 train_epochs=30,
+                fine_tune=False,
                 batch_size=16)
 
 

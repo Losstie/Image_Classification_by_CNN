@@ -131,7 +131,6 @@ def transition(inputs, training, reduction, drop_rate, data_format):
     """
     x = batch_norm(inputs, training, data_format)
     x = tf.nn.relu(x)
-    print(x.shape,'transition_0')
 
     in_channels = x.shape[-1] if data_format == 'channels_last' else x.shape[1]
     num_in_channels = int(in_channels)
@@ -277,10 +276,8 @@ class Model(object):
                 # https://www.tensorflow.org/performance/performance_guide#data_formats
                 inputs = tf.transpose(a=inputs, perm=[0, 3, 1, 2])
                 self.data_format = 'channels_first'
-            print(inputs.shape,self.data_format)
             inputs = conv2d(inputs, filters=self.growth_rate*2, kernel_size=7,
                             strides=2, data_format=self.data_format)
-            print(inputs.shape)
 
             if self.data_name == 'ImageNet':
                 inputs = tf.layers.max_pooling2d(inputs=inputs, pool_size=[3, 3],

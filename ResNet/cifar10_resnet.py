@@ -598,9 +598,9 @@ def define_flags(resnet_size_choices=None):
     print(data_dir)
     set_default(data_dir='../dataset/cifar-10',
                 model_dir=models_path,
-                mode="train",
+                mode="evaluate",
                 resnet_size='56',
-                train_epochs=10,
+                train_epochs=30,
                 batch_size=16)
 
 
@@ -608,6 +608,3 @@ if __name__ == "__main__":
     tf.logging.set_verbosity(tf.logging.INFO)
     define_flags()
     tf.app.run()
-
-model = model_class(densenet_size, reduction, drop_rate, growth_rate, data_name,
-                        data_format, densenet_version=densenet_version, dtype=dtype)

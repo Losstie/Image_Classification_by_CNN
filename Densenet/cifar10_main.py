@@ -590,9 +590,9 @@ def define_flags(resnet_size_choices=None):
     data_dir = os.path.join(dir_path, 'dataset\cifar-10')
     set_default(data_dir='../dataset/cifar-10',
                 model_dir=models_path,
-                mode="train",
+                mode="evaluate",
                 densenet_size='40',
-                train_epochs=10,
+                train_epochs=30,
                 batch_size=16)
 
 

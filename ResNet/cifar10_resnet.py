@@ -281,8 +281,8 @@ class Cifar10Model(resnet_model.Model):
             num_filters=16,
             kernel_size=3,
             conv_stride=1,
-            first_pool_size=None,
-            first_pool_stride=None,
+            first_pool_size=3,
+            first_pool_stride=2,
             block_size=[num_blocks] * 3,
             block_stride=[1, 2, 2],
             resnet_version=resnet_version,
@@ -604,8 +604,8 @@ def define_flags(resnet_size_choices=None):
     print(data_dir)
     set_default(data_dir='../dataset/cifar-10',
                 model_dir=models_path,
-                mode="evaluate",
-                resnet_size='56',
+                mode="train",
+                resnet_size='50',
                 train_epochs=30,
                 batch_size=16)
 

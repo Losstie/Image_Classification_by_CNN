@@ -298,6 +298,7 @@ def block_layer(inputs, filters, bottleneck, block_fn, blocks, strides,
     # Only the first block per block_layer uses projection_shortcut and strides
     inputs = block_fn(inputs, filters, training, projection_shortcut, strides,
                       data_format)
+    print("block_layer:{}".format(inputs.shape))
 
     for _ in range(1, blocks):
         inputs = block_fn(inputs, filters, training, None, 1, data_format)

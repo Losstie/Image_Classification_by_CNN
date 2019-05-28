@@ -91,21 +91,21 @@ def transformer_layer_va(inputs, filters, training, strides, data_format):
         The output tensor of the layer;
 
     """
-    channels_in = inputs.shape[-1] if data_format == 'channels_last' else inputs.shape[1]
+    # channels_in = inputs.shape[-1] if data_format == 'channels_last' else inputs.shape[1]
 
     inputs = batch_norm(inputs, training, data_format)
     inputs = tf.nn.relu(inputs)
-    inputs = conv2d_fixed_padding(inputs=inputs, filters=filters, kernel_size=1, strides=1,
+    inputs = conv2d_fixed_padding(inputs=inputs, filters=4, kernel_size=1, strides=1,
                                   data_format=data_format)
 
     inputs = batch_norm(inputs, training, data_format)
     inputs = tf.nn.relu(inputs)
-    inputs = conv2d_fixed_padding(inputs=inputs, filters=filters, kernel_size=3, strides=strides,
+    inputs = conv2d_fixed_padding(inputs=inputs, filters=4, kernel_size=3, strides=strides,
                                   data_format=data_format)
 
     inputs = batch_norm(inputs, training, data_format)
     inputs = tf.nn.relu(inputs)
-    inputs = conv2d_fixed_padding(inputs=inputs, filters=channels_in, kernel_size=1, strides=1,
+    inputs = conv2d_fixed_padding(inputs=inputs, filters=2 * filters, kernel_size=1, strides=1,
                                   data_format=data_format)
 
     return inputs
@@ -115,20 +115,26 @@ def transformer_layer_vb(inputs, filters, training, strides, data_format):
     """A transformer layer for version b"""
     inputs = batch_norm(inputs, training, data_format)
     inputs = tf.nn.relu(inputs)
-    inputs = conv2d_fixed_padding(inputs=inputs, filters=filters, kernel_size=1, strides=1,
+    inputs = conv2d_fixed_padding(inputs=inputs, filters=4, kernel_size=1, strides=1,
                                   data_format=data_format)
 
     inputs = batch_norm(inputs, training, data_format)
     inputs = tf.nn.relu(inputs)
-    inputs = conv2d_fixed_padding(inputs=inputs, filters=filters, kernel_size=3, strides=strides,
+    inputs = conv2d_fixed_padding(inputs=inputs, filters=4, kernel_size=3, strides=strides,
                                   data_format=data_format)
 
     return inputs
 
 
-def split_layer(inputs, version, cardinality, filters, training, strides, data_format):
+def split_layer(inputs, version, cardinality, filters, training, projection_shortcut, strides, data_format):
 
     shortcuts = inputs
+
+    # The projection shortcut should come after the first batch norm and ReLU
+    # since it performs a 1x1 convolution.
+    if projection_shortcut is not None:
+        shortcuts = projection_shortcut(inputs)
+
     outputs = 0
     if version == 'a':
         for i in range(cardinality):
@@ -140,6 +146,10 @@ def split_layer(inputs, version, cardinality, filters, training, strides, data_f
             splits = transformer_layer_vb(inputs, filters, training, strides, data_format)
             layers_split.append(splits)
         outputs = tf.concat(layers_split, axis=3 if data_format == 'channels_last' else 1)
+        outputs = batch_norm(outputs, training, data_format)
+        outputs = tf.nn.relu(outputs)
+        outputs = conv2d_fixed_padding(inputs=outputs, filters=filters * 2, kernel_size=1, strides=1,
+                                      data_format=data_format)
 
     return outputs + shortcuts
 
@@ -163,13 +173,20 @@ def block_layer(inputs, filters, version, cardinality, split_layer, blocks, stri
     Returns:
         The output tensor of the block layer.
     """
+    filters_out = filters * 2
+
+    def projection_shortcut(inputs):
+        return conv2d_fixed_padding(
+            inputs=inputs, filters=filters_out, kernel_size=1, strides=strides,
+            data_format=data_format)
 
     # Only the first block per block_layer uses projection_shortcut and strides
-    inputs = split_layer(inputs, version, cardinality, filters, training, strides,
+    inputs = split_layer(inputs, version, cardinality, filters, training, projection_shortcut, strides,
                          data_format)
+    print("block_layer:{}".format(inputs.shape))
 
     for _ in range(1, blocks):
-        inputs = split_layer(inputs, version, cardinality, filters, training, 1,
+        inputs = split_layer(inputs, version, cardinality, filters, training, None, 1,
                              data_format)
 
     return tf.identity(inputs, name)
@@ -177,7 +194,7 @@ def block_layer(inputs, filters, version, cardinality, split_layer, blocks, stri
 
 class Model(object):
     def __init__(self, resnext_size, num_classes, num_filters,
-                 kernel_size,cardinality,
+                 kernel_size, cardinality,
                  conv_stride, first_pool_size, first_pool_stride,
                  block_size, block_stride,
                  resnext_version=DEFAULT_VERSION, data_format=None,
@@ -220,6 +237,7 @@ class Model(object):
 
         if dtype not in ALLOWED_TYPES:
             raise ValueError('dtype must be one of:{}'.format(ALLOWED_TYPES))
+
         self.cardinality = cardinality
         self.data_format = data_format
         self.num_classes = num_classes

@@ -105,7 +105,7 @@ def transformer_layer_va(inputs, filters, training, strides, data_format):
 
     inputs = batch_norm(inputs, training, data_format)
     inputs = tf.nn.relu(inputs)
-    inputs = conv2d_fixed_padding(inputs=inputs, filters=2 * filters, kernel_size=1, strides=1,
+    inputs = conv2d_fixed_padding(inputs=inputs, filters=4 * filters, kernel_size=1, strides=1,
                                   data_format=data_format)
 
     return inputs
@@ -113,6 +113,7 @@ def transformer_layer_va(inputs, filters, training, strides, data_format):
 
 def transformer_layer_vb(inputs, filters, training, strides, data_format):
     """A transformer layer for version b"""
+
     inputs = batch_norm(inputs, training, data_format)
     inputs = tf.nn.relu(inputs)
     inputs = conv2d_fixed_padding(inputs=inputs, filters=4, kernel_size=1, strides=1,
@@ -148,8 +149,9 @@ def split_layer(inputs, version, cardinality, filters, training, projection_shor
         outputs = tf.concat(layers_split, axis=3 if data_format == 'channels_last' else 1)
         outputs = batch_norm(outputs, training, data_format)
         outputs = tf.nn.relu(outputs)
-        outputs = conv2d_fixed_padding(inputs=outputs, filters=filters * 2, kernel_size=1, strides=1,
+        outputs = conv2d_fixed_padding(inputs=outputs, filters=filters * 4, kernel_size=1, strides=1,
                                       data_format=data_format)
+    # print(outputs.shape, shortcuts.shape)
 
     return outputs + shortcuts
 
@@ -173,7 +175,7 @@ def block_layer(inputs, filters, version, cardinality, split_layer, blocks, stri
     Returns:
         The output tensor of the block layer.
     """
-    filters_out = filters * 2
+    filters_out = filters * 4
 
     def projection_shortcut(inputs):
         return conv2d_fixed_padding(
@@ -183,7 +185,6 @@ def block_layer(inputs, filters, version, cardinality, split_layer, blocks, stri
     # Only the first block per block_layer uses projection_shortcut and strides
     inputs = split_layer(inputs, version, cardinality, filters, training, projection_shortcut, strides,
                          data_format)
-    print("block_layer:{}".format(inputs.shape))
 
     for _ in range(1, blocks):
         inputs = split_layer(inputs, version, cardinality, filters, training, None, 1,

@@ -276,10 +276,10 @@ class Cifar10Model(ResNeXt_model.Model):
         super(Cifar10Model, self).__init__(
             resnext_size=resnext_size,
             num_classes=num_classes,
-            num_filters=16,
-            kernel_size=3,
+            num_filters=64,
+            kernel_size=7,
             cardinality=cardinality,
-            conv_stride=1,
+            conv_stride=2,
             first_pool_size=3,
             first_pool_stride=2,
             block_size=[num_blocks] * 3,
@@ -608,7 +608,7 @@ def define_flags(resnext_size_choices=None):
                 model_dir=models_path,
                 mode="train",
                 resnext_size='56',
-                cardinality=16,
+                cardinality=32,
                 train_epochs=30,
                 batch_size=16)
 

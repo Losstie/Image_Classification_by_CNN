@@ -167,10 +167,6 @@ def split_layer(inputs, version, cardinality, filters, training, projection_shor
     return outputs + shortcuts
 
 
-def transition_layer():
-    """"""
-
-
 def squeeze_excitation_layer(inputs, out_dim, ratio, data_format):
     """The squeeze_excaitation_layer for model
     Args:

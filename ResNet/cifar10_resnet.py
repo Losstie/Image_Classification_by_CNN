@@ -606,7 +606,7 @@ def define_flags(resnet_size_choices=None):
                 model_dir=models_path,
                 mode="train",
                 resnet_size='50',
-                train_epochs=30,
+                train_epochs=10,
                 batch_size=16)
 
 

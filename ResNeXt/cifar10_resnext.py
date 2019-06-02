@@ -609,7 +609,7 @@ def define_flags(resnext_size_choices=None):
                 mode="train",
                 resnext_size='56',
                 cardinality=32,
-                train_epochs=30,
+                train_epochs=10,
                 batch_size=16)
 
 

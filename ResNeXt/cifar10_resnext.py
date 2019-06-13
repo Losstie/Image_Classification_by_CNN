@@ -606,9 +606,9 @@ def define_flags(resnext_size_choices=None):
     set_default(data_dir='../dataset/cifar-10',
                 resnext_version='b',
                 model_dir=models_path,
-                mode="train",
-                resnext_size='56',
-                cardinality=32,
+                mode="evaluate",
+                resnext_size='50',
+                cardinality=16,
                 train_epochs=10,
                 batch_size=16)
 

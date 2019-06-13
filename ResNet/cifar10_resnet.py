@@ -547,7 +547,7 @@ def define_flags(resnet_size_choices=None):
                       help="if set, model dir will be remove if it exists.")
     flags.DEFINE_integer(name="train_epochs",
                          short_name="te",
-                         default="20",
+                         default="10",
                          help="the number of epochs used to trian.")
     flags.DEFINE_float(name="stop_threshold",
                        short_name="st",
@@ -604,12 +604,12 @@ def define_flags(resnet_size_choices=None):
     print(data_dir)
     set_default(data_dir='../dataset/cifar-10',
                 model_dir=models_path,
-                mode="train",
+                mode="evaluate",
                 resnet_size='50',
                 train_epochs=10,
                 batch_size=16)
 
-
+# 62451
 if __name__ == "__main__":
     tf.logging.set_verbosity(tf.logging.INFO)
     define_flags()

@@ -614,8 +614,8 @@ def define_flags(senet_size_choices=None):
                 model_dir=models_path,
                 mode="train",
                 senet_size='50',
-                cardinality=32,
-                train_epochs=30,
+                cardinality=16,
+                train_epochs=10,
                 batch_size=16)
 
 

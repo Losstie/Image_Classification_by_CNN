@@ -140,7 +140,7 @@ def transformer_layer_vb(inputs, filters, training, strides, data_format):
     return inputs
 
 
-def split_layer(inputs, version, cardinality, filters, training, projection_shortcut, strides, data_format):
+def split_layer(inputs, version, cardinality, filters, ratio, training, projection_shortcut, strides, data_format):
 
     shortcuts = inputs
 
@@ -164,6 +164,8 @@ def split_layer(inputs, version, cardinality, filters, training, projection_shor
         outputs = tf.nn.relu(outputs)
         outputs = conv2d_fixed_padding(inputs=outputs, filters=filters * 4, kernel_size=1, strides=1,
                                       data_format=data_format)
+    channels_in = int(outputs.shape[-1] if data_format == 'channels_last' else outputs.shape[1])
+    outputs = squeeze_excitation_layer(outputs, channels_in, ratio=ratio, data_format=data_format)
     return outputs + shortcuts
 
 
@@ -217,16 +219,13 @@ def block_layer(inputs, filters, version, cardinality, split_layer, blocks, stri
             data_format=data_format)
 
     # Only the first block per block_layer uses projection_shortcut and strides
-    inputs = split_layer(inputs, version, cardinality, filters, training, projection_shortcut, strides,
+    inputs = split_layer(inputs, version, cardinality, filters, ratio, training, projection_shortcut, strides,
                          data_format)
-    channels_in = int(inputs.shape[-1] if data_format == 'channels_last' else inputs.shape[1])
-    inputs = squeeze_excitation_layer(inputs, channels_in, ratio=ratio, data_format=data_format)
+
 
     for _ in range(1, blocks):
-        inputs = split_layer(inputs, version, cardinality, filters, training, None, 1,
+        inputs = split_layer(inputs, version, cardinality, filters, ratio, training, None, 1,
                              data_format)
-        channels_in = int(inputs.shape[-1] if data_format == 'channels_last' else inputs.shape[1])
-        inputs = squeeze_excitation_layer(inputs, channels_in, ratio=ratio, data_format=data_format)
 
     return tf.identity(inputs, name)
 
@@ -398,7 +397,6 @@ class Model(object):
             inputs = tf.identity(inputs, 'final_reduce_mean')
 
             inputs = tf.squeeze(inputs, axes)
-            inputs = tf.nn.dropout(inputs, rate=0.2)
             inputs = tf.compat.v1.layers.dense(inputs=inputs, units=self.num_classes)
             inputs = tf.identity(inputs, 'final_dense')
             return inputs
